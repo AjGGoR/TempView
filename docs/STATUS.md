@@ -36,3 +36,7 @@ WPF/.NET 10 + LibreHardwareMonitorLib 0.9.6 (MPL 2.0). Osobne okna nad obszarem 
 ## Kontynuacja
 
 Przeczytaj AGENTS.md, pobierz tę samą gałąź na drugim komputerze, uruchom scripts/test.ps1 i scripts/build.ps1. Pobierz artefakt z udanego przebiegu GitHub Actions. Następny etap: testy macierzy sprzętu i powłoki, ograniczenie narzutu UIA oraz broker uprawnień. Instalator TempView i automatyczne aktualizacje pozostają poza zakresem.
+
+## Dokumentacja użytkownika
+
+README zawiera wyłącznie opis aplikacji i instrukcję użytkownika. Instrukcje budowania oraz pracy z Git przeniesiono do DEVELOPMENT.md. Zmiana dokumentacyjna; sprawdzono odnośniki lokalne i diff, bez zmian kodu aplikacji.
