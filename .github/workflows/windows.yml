@@ -1,0 +1,40 @@
+name: Windows build and tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test
+        shell: pwsh
+        run: ./scripts/test.ps1
+      - name: Publish self-contained x64
+        shell: pwsh
+        run: ./scripts/build.ps1
+      - name: Start packaged application (no hardware compatibility claim)
+        shell: pwsh
+        run: |
+          $app = Start-Process ./artifacts/TempView-win-x64/TempView.exe -ArgumentList '--smoke' -PassThru
+          if (-not $app.WaitForExit(45000)) { Stop-Process -Id $app.Id; throw 'Application did not finish smoke check.' }
+          if ($app.ExitCode -ne 0) { throw "Application exited with $($app.ExitCode)" }
+      - name: Downloadable application
+        uses: actions/upload-artifact@v4
+        with:
+          name: TempView-win-x64
+          path: artifacts/TempView-win-x64.zip
+          if-no-files-found: error
+      - name: Test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: warn

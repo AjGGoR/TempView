@@ -1,0 +1,32 @@
+{
+  "SchemaVersion": 1,
+  "Theme": "auto",
+  "CpuColor": "#ECEFF4",
+  "GpuColor": "#ECEFF4",
+  "BackgroundColor": "#202020",
+  "BackgroundOpacity": 0.85,
+  "FontSize": 11,
+  "Width": 112,
+  "Horizontal": false,
+  "ShowIcons": false,
+  "Padding": 4,
+  "RefreshSeconds": 1,
+  "MonitorMode": "primary",
+  "Monitors": [],
+  "CpuSensorId": null,
+  "GpuSensorId": null,
+  "CpuGradient": {
+    "Enabled": false,
+    "Points": [
+      { "Temperature": 40, "Color": "#7DDC97" },
+      { "Temperature": 80, "Color": "#FF6B6B" }
+    ]
+  },
+  "GpuGradient": {
+    "Enabled": false,
+    "Points": [
+      { "Temperature": 40, "Color": "#7DDC97" },
+      { "Temperature": 80, "Color": "#FF6B6B" }
+    ]
+  }
+}
