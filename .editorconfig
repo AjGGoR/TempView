@@ -8,3 +8,7 @@ insert_final_newline = true
 [*.cs]
 indent_style = space
 indent_size = 4
+
+[*.ps1]
+# Windows PowerShell 5.1 reads BOM-less scripts as ANSI and breaks Polish strings.
+charset = utf-8-bom

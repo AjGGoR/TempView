@@ -1,42 +1,44 @@
-# Stan TempView — 2026-10-30
+# Stan TempView — 2026-10-31
 
-Dostarczono działającą wersję testową Windows x64. Kod, testy, publikacja self-contained, ustawienia i integracja nakładki są gotowe do kontynuowania na drugim komputerze. Gałąź etapu: `feat/windows-taskbar-widget`.
+Etap: przeprojektowanie interfejsu (gałąź `feature/fluent-redesign`). Panel na pasku i okno ustawień mają nowy wygląd zgodny z Windows 11 / Fluent 2. Odczyt czujników, wykrywanie paska i mechanizm nakładki pozostały bez zmian funkcjonalnych.
 
-## Zweryfikowane lokalnie
+## Zmiany w tym etapie
 
-- Windows 11 Home 10.0.26200, AMD Ryzen 5 3500U z Radeon Vega Mobile, jeden ekran 1920×1080, skala 125% (120 DPI).
-- .NET SDK 10.0.403: kompilacja Release bez błędów i ostrzeżeń; paczka self-contained uruchamia się bez instalacji runtime.
-- 27 testów zaliczonych: interpolacja i wygładzanie, walidacja progów/konfiguracji, zapis/odczyt, uszkodzony i przyszły format, niedostępne/przeterminowane dane, wolne przedziały paska (obie strony, ujemne współrzędne, nakładanie i brak miejsca).
-- Rzeczywiste odczyty po instalacji podpisanego PawnIO 2.1.0 i uruchomieniu TempView jako administrator: CPU 51°C, GPU 46,24°C w próbce kontrolnej. CPU: Tctl/Tdie; GPU: GFX z SMU AMD APU. Nie są to dane demonstracyjne. Bez uprawnień odczyty były niedostępne i prezentowane jako N/A. Nie zmieniono zabezpieczeń Windows.
-- Czujnik AMD `GFX` jest przypisywany do GPU mimo umieszczenia przez LHM wewnątrz grupy CPU. Źródło: [RyzenSMU w LHM 0.9.6](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/blob/v0.9.6/LibreHardwareMonitorLib/Hardware/RyzenSMU.cs).
-- Wykrywanie paska, Start, przypiętych aplikacji i zasobnika przez UI Automation. Dla szerokości 112 DIP wolne pozycje: lewa x=8, prawa x=1437, y=1020, rozmiar 140×60 pikseli. Zegar systemowy pozostaje poza panelem.
-- Graficzne ustawienia: otwarcie, podgląd, zmiana strony i zapis przez UI; konfiguracja przetrwała ponowne uruchomienia. Dalsze ustawienia użytkownika (81 DIP, ikony, margines 2, tekst 10, lewa strona) zostały zachowane; po restarcie panel miał 102×60 pikseli.
-- Instalator PawnIO pobrany z upstream: SHA256 zgodny z DRIVER.md, podpis Authenticode Valid, namazso.eu; instalacja zatwierdzona przez użytkownika. Usługa PawnIO działa.
-- Pomiar po poprawkach: 30,09 s, 4,984 s czasu CPU procesu na 8 procesorach logicznych, czyli średnio 2,07% całego CPU; Working Set na końcu 133,95 MiB. Aplikacja podwyższona, rzeczywiste sensory, odświeżanie 1 s, bez otwartego okna ustawień. To pojedyncza próbka na tym laptopie, nie gwarancja dla innych komputerów. Dalsze ograniczenie narzutu skanowania UIA jest wskazanym usprawnieniem.
+- **Panel:** kompaktowa powierzchnia 40 DIP na pasku 48 DIP, zaokrąglenie 6, półprzezroczyste tło z delikatną krawędzią, ikony CPU/GPU, wyciszone etykiety i pogrubione wartości. Kolumna wartości ma stałą szerokość i cyfry tabelaryczne, więc panel nie zmienia rozmiaru przy zmianie odczytu. Stany najechania i wciśnięcia; wysoki kontrast używa kolorów systemowych. Automatyczna szerokość jest domyślna. Inspiracja wizualna: FluentFlyout (GPL-3.0) — nie skopiowano kodu ani zasobów; TempView nie osadza się w Explorer jak FluentFlyout.
+- **Okno ustawień:** nawigacja boczna (Wygląd, Ekrany, Czujniki, Kolory temperatur), karty ustawień, podgląd z bieżącymi odczytami, stały pasek stanu zapisu. Zapis nie zamyka okna; „Odrzuć zmiany” i „Przywróć domyślne” działają na wersji roboczej; zamknięcie z niezapisanymi zmianami pyta o zapis. Strona Czujniki wyjaśnia brak odczytu i stan PawnIO; strona Ekrany pokazuje, dlaczego panel jest ukryty na danym ekranie. Kompaktowa nawigacja poniżej 760 px.
+- **Motyw:** wbudowany motyw Fluent z .NET 10 (Mica, kolor akcentu, wysoki kontrast) bez nowych zależności. Motyw systemowy panelu odpowiada trybowi paska zadań; okno — trybowi aplikacji.
+- **Zasobnik:** własna monochromatyczna ikona dopasowana do paska, menu Fluent, lewy klik otwiera ustawienia. „Diagnostyka czujników” otwiera stronę Czujniki zamiast okna komunikatu. Ponowne uruchomienie EXE otwiera ustawienia działającej instancji.
+- **Ustawienia:** wersja 2 (`CustomColors`, `AutoWidth`) z migracją wersji 1. Jawne wartości użytkownika są zachowane; tylko nigdy niezmienione domyślne wartości układu przechodzą na nowe domyślne.
+- **Przegląd kodu:** niezależny przegląd zmian wykrył 7 problemów, wszystkie poprawione i sprawdzone. Najważniejsze: niepoprawny tekst w polu temperatury (np. „-”) zapisywał NaN do ustawień i zamykał aplikację, a niepełny kolor tła powodował wyjątek na stronie kolorów. Teraz niepoprawne pola nie trafiają do ustawień i blokują zapis. Usunięto też wyciek okna, narastanie odświeżeń, utratę kliknięć w wierszach punktów i resetowanie podglądu co sekundę.
+- **Środowisko:** skrypty `.ps1` z BOM (działają w Windows PowerShell 5.1), poprawione wykrywanie sukcesu `setup.ps1`, `nuget.config` w repozytorium.
+
+## Zweryfikowane lokalnie (2026-10-31)
+
+Środowisko: Windows 11 Pro 10.0.26200, AMD Ryzen 7 7800X3D, NVIDIA GeForce RTX 5070 + Radeon iGPU, dwa ekrany: 2560×1440 (główny) i 1920×1080 (x = −1920), oba 100% (96 DPI), tryb ciemny, przezroczystość włączona, pasek wyśrodkowany. .NET SDK 10.0.403 zainstalowane przez setup.ps1.
+
+- `scripts/test.ps1`: 40 testów zaliczonych (27 wcześniejszych + migracja v1→v2, paleta motywów, kontrast WCAG). `scripts/build.ps1`: Release bez ostrzeżeń, paczka self-contained. Paczka uruchomiona z `--smoke` bez runtime w PATH: kod wyjścia 0.
+- Rzeczywiste odczyty: GPU (NVIDIA GPU Core) 32–49°C. CPU: N/A z powodem „Brak sterownika PawnIO” — PawnIO nie jest zainstalowany na tym komputerze, aplikacja działała bez administratora. Brak danych nigdy nie był pokazany jako 0.
+- Zrzuty ekranu i sterowanie przez UI Automation: wszystkie cztery strony, motyw ciemny i wymuszony jasny, układ pionowy i poziomy, kolory zależne od temperatury (zielony odczyt GPU na pasku, znacznik bieżącej temperatury na skali), zapis do pliku, ponowne uruchomienie z zapisanymi ustawieniami, okno „Zapisać zmiany?” i „Nie zapisuj” (plik bez zmian), migracja pliku v1 (81 px, tekst 10, margines 2, ikony) i niedostępny wybrany czujnik („Niedostępny: …”, N/A na panelu), tryb wszystkich ekranów (panel na drugim ekranie), wąskie okno 680 px.
+- Najechanie na panel: podpowiedź z odczytami i powodem braku danych. Prawy klik: menu Fluent. Wszystkie elementy fokusowalne na każdej stronie mają nazwy dostępności (zrzut drzewa UIA).
+- Położenie: panel x = 8 na pasku głównym i x = −1912 na drugim, status OK, zegar i obszar powiadomień nie są zasłaniane.
+
+## Niesprawdzone
+
+- Skalowanie 125/150/200% i mieszane DPI: oba ekrany tego komputera mają 100%, a zmiana skalowania systemu nie była częścią testu. Rozmiary są w DIP, a pozycja liczona z DPI paska — jak wcześniej.
+- Wysoki kontrast, wyłączona przezroczystość i wyłączone animacje w systemie: ścieżki kodu istnieją (kolory systemowe, nieprzezroczyste tło, brak animacji), przezroczystość jest pokryta testem jednostkowym; nie sprawdzono ich na żywo, bo wymagałoby to zmiany ustawień systemu użytkownika.
+- Systemowy jasny tryb paska (testowano jasny motyw wymuszony w TempView), autoukrywanie paska, pełny ekran, restart explorer.exe, uśpienie.
+- Odczyt CPU po instalacji PawnIO na tym komputerze; Mica przy innym tle pulpitu; czytniki ekranu (sprawdzono nazwy UIA, nie Narratora).
+- Panel nie przyjmuje fokusu klawiatury (WS_EX_NOACTIVATE, aby nie odbierać fokusu aplikacjom); dostęp z klawiatury zapewnia ikona w zasobniku i okno ustawień.
 
 ## Architektura i ograniczenia
 
-WPF/.NET 10 + LibreHardwareMonitorLib 0.9.6 (MPL 2.0). Osobne okna nad obszarem paska, bez wstrzykiwania kodu do Explorer, bez zastępowania zegara i bez AppBar udającego osadzenie. Windows 11 nie udostępnia obsługiwanego kontraktu dla dowolnego panelu wewnątrz nowego paska; zgodność zależy od wersji powłoki. [Dokumentacja rozszerzeń Microsoft](https://learn.microsoft.com/en-us/windows/win32/shell/taskbar-extensions).
+WPF/.NET 10 + LibreHardwareMonitorLib 0.9.6 (MPL 2.0). Osobne okna nad obszarem paska, bez wstrzykiwania kodu do Explorer, bez zastępowania zegara i bez AppBar udającego osadzenie. Windows 11 nie udostępnia obsługiwanego kontraktu dla dowolnego panelu wewnątrz nowego paska. [Dokumentacja rozszerzeń Microsoft](https://learn.microsoft.com/en-us/windows/win32/shell/taskbar-extensions).
 
-- Nakładka nie rezerwuje miejsca w Explorer. Sprawdza wolny obszar co ok. sekundę; zmiana układu między skanami może chwilowo wyprzedzić reakcję. Brak pełnego drzewa UIA, brak miejsca, ukryty pasek lub pełny ekran powodują ukrycie panelu. Skan bez aktualizacji przez 5 s także ukrywa okna. Nie deklarujemy bezwarunkowej stabilności na każdej kompilacji Windows.
-- Osobne zadania odczytują sensory i układ paska. UI odrzuca stare pomiary. Lista sprzętu jest ponownie otwierana co minutę, lista pasków jest wykrywana ponownie w każdej iteracji. Ikona zasobnika zachowuje dostęp do ustawień po odłączeniu ekranu.
-- PawnIO wymaga osobnej instalacji; paczka zawiera zweryfikowany skrypt pobierania i instrukcję, a nie binarny instalator. Do pobrania potrzebny jest internet. Nie można obiecać temperatur CPU po samym rozpakowaniu ZIP na nowym komputerze.
-- Uprawnienia administratora w tej wersji obejmują cały proces. Oddzielny broker czujników pozostaje usprawnieniem architektury. Bezpieczny tryb bez podwyższenia pokazuje dostępne czujniki albo N/A.
-- Rzeczywiste temperatury <=0°C są odrzucane jako niewiarygodne w tym konsumenckim zastosowaniu. Czujnik niewspierany nie jest zastępowany 0°C.
-- Pozycja wybranego ekranu jest zapisana przez nazwę urządzenia Windows DISPLAY; numeracja może zmienić się po przebudowie konfiguracji monitorów.
-- UIA bywało początkowo niedostępne przy uruchamianiu z narzędzi. Próba z Eksploratora oraz późniejsze uruchomienia zwracały poprawne granice; przy niepełnych danych aplikacja ukrywa panel.
-
-## Niesprawdzone ręcznie
-
-- Inne CPU Intel/AMD i osobne GPU NVIDIA/AMD/Intel, wiele GPU, brakujące/odłączane urządzenia.
-- Fizyczny drugi monitor, mieszane DPI, odłączanie/dokowanie, zmiana rozdzielczości.
-- Restart explorer.exe, usypianie/wybudzanie, autoukrywanie i aplikacje pełnoekranowe. Odpowiednia logika jest zaimplementowana; nie jest to potwierdzenie jej działania na sprzęcie.
-- Wizualne przejścia gradientów przy rzeczywistym pomiarze: logika i animacja są zaimplementowane, interpolacja przetestowana automatycznie, ale pełny test wizualny przerwano po zatrzymaniu Computer Use przez użytkownika klawiszem Esc.
+- Nakładka nie rezerwuje miejsca w Explorer. Wolny obszar jest sprawdzany co ok. sekundę; brak pełnego drzewa UIA, brak miejsca, ukryty pasek lub pełny ekran ukrywają panel. Powód widać na stronie Ekrany.
+- Osobne zadania odczytują sensory i układ paska; UI odrzuca stare pomiary. Szerokość panelu jest mierzona w wątku UI i przekazywana do skanera paska.
+- PawnIO wymaga osobnej instalacji; uprawnienia administratora obejmują cały proces. Rzeczywiste temperatury ≤0°C są odrzucane; niewspierany czujnik nie jest zastępowany 0°C.
+- `Application.ThemeMode` jest w .NET 10 oznaczone jako eksperymentalne (WPF0001). Ostrzeżenie wyciszono w jednym miejscu.
 
 ## Kontynuacja
 
-Przeczytaj AGENTS.md, pobierz tę samą gałąź na drugim komputerze, uruchom scripts/test.ps1 i scripts/build.ps1. Pobierz artefakt z udanego przebiegu GitHub Actions. Następny etap: testy macierzy sprzętu i powłoki, ograniczenie narzutu UIA oraz broker uprawnień. Instalator TempView i automatyczne aktualizacje pozostają poza zakresem.
-
-## Dokumentacja użytkownika
-
-README zawiera wyłącznie opis aplikacji i instrukcję użytkownika. Instrukcje budowania oraz pracy z Git przeniesiono do DEVELOPMENT.md. Zmiana dokumentacyjna; sprawdzono odnośniki lokalne i diff, bez zmian kodu aplikacji.
+Przeczytaj AGENTS.md, pobierz gałąź `feature/fluent-redesign`, uruchom scripts/test.ps1 i scripts/build.ps1. Następne kroki: test przy 125–200% i mieszanym DPI, wysoki kontrast i wyłączona przezroczystość na żywo, Narrator, odczyt CPU z PawnIO; potem scalenie do `main`. Dalej: macierz sprzętu i powłoki, ograniczenie narzutu UIA, broker uprawnień.

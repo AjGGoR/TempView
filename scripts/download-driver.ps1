@@ -1,4 +1,4 @@
-# Pobiera wyłącznie na żądanie; NIE instaluje sterownika i NIE podnosi uprawnień.
+﻿# Pobiera wyłącznie na żądanie; NIE instaluje sterownika i NIE podnosi uprawnień.
 param([string]$Destination = (Join-Path $env:USERPROFILE 'Downloads/TempView-PawnIO-2.1.0-setup.exe'))
 $ErrorActionPreference = 'Stop'
 $expectedHash = 'A3A46226C5E2824F4CDD42BE0EECBABFC672C86F7889710F5AB1E6AD385B47A0'

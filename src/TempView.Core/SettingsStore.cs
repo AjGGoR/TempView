@@ -17,11 +17,12 @@ public sealed class SettingsStore
         try
         {
             var settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath), Options) ?? throw new JsonException("Empty settings.");
-            if (settings.SchemaVersion > 1)
+            if (settings.SchemaVersion > AppSettings.CurrentSchemaVersion)
             {
                 futureVersion = true;
                 return new(new(), "Konfiguracja pochodzi z nowszej wersji TempView. Plik zachowano; zapis jest zablokowany.");
             }
+            SettingsMigration.Migrate(settings);
             var errors = SettingsValidator.Validate(settings);
             if (errors.Count > 0) throw new JsonException(string.Join(" ", errors));
             futureVersion = false;

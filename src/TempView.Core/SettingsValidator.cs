@@ -11,7 +11,7 @@ public static partial class SettingsValidator
     public static IReadOnlyList<string> Validate(AppSettings settings)
     {
         var errors = new List<string>();
-        if (settings.SchemaVersion != 1) errors.Add("Nieobsługiwana wersja konfiguracji.");
+        if (settings.SchemaVersion != AppSettings.CurrentSchemaVersion) errors.Add("Nieobsługiwana wersja konfiguracji.");
         if (settings.Theme is not ("auto" or "dark" or "light")) errors.Add("Nieprawidłowy motyw.");
         if (settings.MonitorMode is not ("primary" or "all" or "selected")) errors.Add("Nieprawidłowy tryb monitorów.");
         foreach (var color in new[] { settings.CpuColor, settings.GpuColor, settings.BackgroundColor })

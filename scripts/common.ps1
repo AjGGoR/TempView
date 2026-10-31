@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path $PSScriptRoot -Parent
 $localDotnet = Join-Path $env:LOCALAPPDATA 'TempViewTools/dotnet/dotnet.exe'
 $command = Get-Command dotnet -ErrorAction SilentlyContinue

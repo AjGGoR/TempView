@@ -44,3 +44,18 @@ Ustawienia użytkownika są zapisywane lokalnie i wykluczone z Git. Przykład fo
 GitHub Actions uruchamia testy, buduje paczkę Windows x64, sprawdza jej uruchomienie i udostępnia artefakt. Testy automatyczne nie potwierdzają zgodności sprzętowej ani poprawności wyświetlania na każdej wersji paska Windows. Aktualizuj STATUS.md zgodnie z rzeczywistymi wynikami.
 
 Kod TempView jest objęty MIT. Informacje o zależnościach i ich źródłach znajdują się w katalogu licenses.
+
+## Interfejs
+
+- WPF z wbudowanym motywem Fluent z .NET 10 (`Application.ThemeMode`), bez dodatkowych bibliotek UI. API jest w .NET 10 oznaczone jako eksperymentalne (WPF0001); ostrzeżenie wyciszono wyłącznie w `SystemTheme.Apply`.
+- Wspólne tokeny i style (odstępy, promienie, karty, nawigacja, przełącznik, InfoBar) są w `src/TempView/Themes/TempView.xaml`. Kolory pochodzą wyłącznie z zasobów Fluent, dlatego jasny, ciemny i wysoki kontrast działają bez osobnych palet.
+- `WidgetView` jest wspólny dla nakładki na pasku i podglądu w ustawieniach. Kolory panelu wylicza testowalny `WidgetTheme` w TempView.Core.
+- Ikony panelu, zasobnika i aplikacji są własnymi kształtami wektorowymi (`Icons`). Plik `Assets/TempView.ico` odtworzysz poleceniem `TempView.exe --export-icon src/TempView/Assets/TempView.ico`.
+- Testy ręczne bez naruszania własnej konfiguracji: `TempView.exe --settings-file <plik> --diagnostics <plik> --settings [look|displays|sensors|colors]`.
+- Format ustawień ma wersję 2. Plik w wersji 1 jest migrowany przy odczycie (`SettingsMigration`) i zapisywany jako wersja 2 dopiero po kliknięciu Zapisz.
+
+## Uwagi o środowisku
+
+- Skrypty `.ps1` są zapisane jako UTF-8 z BOM, ponieważ Windows PowerShell 5.1 odczytuje pliki bez BOM jako ANSI i psuje polskie napisy.
+- `nuget.config` w repozytorium wskazuje nuget.org, więc kompilacja nie zależy od globalnej konfiguracji NuGet komputera.
+- Kompilacja Debug wymaga zainstalowanego runtime .NET. Przy SDK z setup.ps1 ustaw `DOTNET_ROOT=%LOCALAPPDATA%\TempViewTools\dotnet` przed uruchomieniem `bin/Debug/.../TempView.exe`; inaczej Windows zaproponuje pobranie runtime. Paczka z build.ps1 jest self-contained.

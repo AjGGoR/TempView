@@ -1,4 +1,4 @@
-param([ValidateSet('win-x64')][string]$Runtime = 'win-x64')
+﻿param([ValidateSet('win-x64')][string]$Runtime = 'win-x64')
 . (Join-Path $PSScriptRoot 'common.ps1')
 $output = Join-Path $RepoRoot "artifacts/TempView-$Runtime"
 Push-Location $RepoRoot

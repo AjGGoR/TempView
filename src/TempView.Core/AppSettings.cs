@@ -2,17 +2,23 @@ namespace TempView.Core;
 
 public sealed class AppSettings
 {
-    public int SchemaVersion { get; set; } = 1;
+    public const int CurrentSchemaVersion = 2;
+
+    public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public string Theme { get; set; } = "auto";
+    /// <summary>False: text and surface follow the theme. True: CpuColor, GpuColor and BackgroundColor are used.</summary>
+    public bool CustomColors { get; set; }
     public string CpuColor { get; set; } = "#ECEFF4";
     public string GpuColor { get; set; } = "#ECEFF4";
     public string BackgroundColor { get; set; } = "#202020";
     public double BackgroundOpacity { get; set; } = 0.85;
-    public double FontSize { get; set; } = 11;
+    public double FontSize { get; set; } = 12;
+    /// <summary>True: panel width follows its content. False: Width is used.</summary>
+    public bool AutoWidth { get; set; } = true;
     public double Width { get; set; } = 112;
     public bool Horizontal { get; set; }
-    public bool ShowIcons { get; set; }
-    public double Padding { get; set; } = 4;
+    public bool ShowIcons { get; set; } = true;
+    public double Padding { get; set; } = 8;
     public double RefreshSeconds { get; set; } = 1;
     public string MonitorMode { get; set; } = "primary";
     public List<MonitorPreference> Monitors { get; set; } = [];

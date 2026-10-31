@@ -5,12 +5,12 @@ TempView wyświetla temperatury procesora (CPU) i karty graficznej (GPU) w niewi
 ## Możliwości
 
 - Temperatury CPU i GPU w stopniach Celsjusza, domyślnie odświeżane co sekundę.
+- Kompaktowy panel w stylu Windows 11: dwa wiersze lub jeden, ikony podzespołów i liczby, które nie przesuwają się przy zmianie odczytu.
 - Wybór lewej lub prawej strony paska oraz monitorów, na których ma być widoczny panel.
-- Układ pionowy lub poziomy, opcjonalne ikony i regulacja rozmiaru tekstu oraz odstępów.
-- Osobne kolory CPU i GPU, ustawienia tła i jego przezroczystości oraz jasny, ciemny lub systemowy motyw.
-- Opcjonalne kolory zależne od temperatury z własnymi progami.
+- Motyw systemowy, jasny lub ciemny. Systemowy motyw panelu odpowiada kolorowi paska zadań.
+- Własne kolory tekstu i tła oraz opcjonalne kolory zależne od temperatury z własnymi punktami.
 - Automatyczny wybór czujników z możliwością ręcznego wskazania innego źródła pomiaru.
-- Podgląd zmian i zapamiętywanie ustawień po zamknięciu aplikacji.
+- Podgląd zmian na żywo z bieżącymi odczytami i zapamiętywanie ustawień po zamknięciu aplikacji.
 
 ## Wymagania
 
@@ -27,24 +27,24 @@ Paczka aplikacji zawiera środowisko .NET potrzebne do uruchomienia. Nie trzeba 
 3. Rozpakuj pobrany ZIP. Jeśli zawiera kolejną paczkę ZIP, rozpakuj również ją.
 4. Otwórz rozpakowany folder i uruchom **TempView.exe**. Zachowaj wszystkie dołączone pliki w tym samym folderze.
 
-Jeżeli aplikacja już działa, dostęp do niej znajdziesz przez ikonę w obszarze powiadomień obok zegara. Ikona może być schowana pod strzałką **Pokaż ukryte ikony**.
+Jeżeli aplikacja już działa, ponowne uruchomienie **TempView.exe** otwiera jej ustawienia. Ikona TempView znajduje się też w obszarze powiadomień obok zegara; może być schowana pod strzałką **Pokaż ukryte ikony**.
 
 ## Ustawienia i obsługa
 
-Kliknij panel temperatur lub kliknij prawym przyciskiem ikonę TempView w obszarze powiadomień i wybierz **Ustawienia**.
+Kliknij panel temperatur lub ikonę TempView w obszarze powiadomień. Prawy przycisk na panelu lub ikonie otwiera menu: **Ustawienia**, **Diagnostyka czujników** i **Zakończ TempView**.
 
-- **Wygląd** — zmień motyw, kolory, przezroczystość, rozmiar, odstępy, układ i widoczność ikon.
-- **Monitory** — wybierz ekran główny, wszystkie ekrany z paskiem lub wybrane monitory. Ustaw stronę paska osobno dla każdego ekranu.
-- **Czujniki** — ustaw częstotliwość odczytu i wybierz źródło temperatury CPU lub GPU.
-- **Kolory temperatur** — włącz kolory zależne od temperatury i dodaj własne punkty z kolorami. Temperatury punktów nie mogą się powtarzać.
+- **Wygląd** — podgląd panelu z bieżącymi odczytami, układ, ikony, szerokość, rozmiar tekstu, margines, motyw, krycie tła i własne kolory.
+- **Ekrany** — ekran główny, wszystkie ekrany z paskiem lub wybrane ekrany; strona paska osobno dla każdego ekranu. Przy każdym ekranie widać, czy panel jest widoczny, a jeśli nie, dlaczego.
+- **Czujniki** — źródło temperatury CPU i GPU z bieżącym odczytem, częstotliwość odczytu oraz stan sterownika PawnIO, uprawnień i plików diagnostyki.
+- **Kolory temperatur** — kolor odczytu zależny od temperatury. Skala pokazuje punkty i bieżący odczyt. Temperatury punktów nie mogą się powtarzać.
 
-Zmiany mają podgląd na żywo. Kliknij **Zapisz**, aby zachować ustawienia, lub **Anuluj**, aby wrócić do poprzednich. Przycisk **Zapisz domyślne** przywraca i zapisuje ustawienia początkowe.
+Zmiany są od razu widoczne na panelu, ale zostają zachowane dopiero po kliknięciu **Zapisz** (Ctrl+S). Stan zapisu jest zawsze widoczny na dole okna. **Odrzuć zmiany** wraca do ostatnio zapisanych ustawień. **Przywróć domyślne** ustawia wartości początkowe bez zapisywania. Przy zamykaniu okna z niezapisanymi zmianami TempView zapyta, czy je zapisać.
 
-Aby zamknąć aplikację, kliknij prawym przyciskiem jej ikonę w obszarze powiadomień i wybierz **Zakończ**.
+Ustawienia z poprzedniej wersji TempView są wczytywane automatycznie; Twoje kolory, rozmiary i wybór czujników zostają zachowane.
 
 ## Gdy temperatura pokazuje N/A
 
-`N/A` oznacza brak wiarygodnego, aktualnego pomiaru. Najedź na wiersz temperatury albo wybierz **Diagnostyka** w menu ikony TempView, aby poznać przyczynę.
+`N/A` oznacza brak wiarygodnego, aktualnego pomiaru. Najedź na panel albo wybierz **Diagnostyka czujników** w menu TempView, aby poznać przyczynę. Strona **Czujniki** opisuje problem i stan sterownika.
 
 1. Sprawdź wybór czujnika w ustawieniach. Po podłączeniu urządzenia otwórz ustawienia ponownie, aby odświeżyć dostępną listę.
 2. Jeśli brakuje temperatury CPU, sprawdź [instrukcję instalacji PawnIO](docs/DRIVER.md). Jest również dołączona do paczki jako **DRIVER.md**. Sterownik instaluje się osobno; samo uruchomienie TempView jako administrator nie zastępuje jego instalacji.
@@ -56,4 +56,4 @@ Nie wyłączaj zabezpieczeń Windows, aby uzyskać pomiar. Nie każdy model CPU 
 
 Panel jest nakładką w wolnym obszarze paska zadań. Nie rezerwuje na nim miejsca. Może się ukryć przy braku wolnego obszaru, ukrytym pasku, aplikacji pełnoekranowej lub problemie z odczytaniem układu paska.
 
-Otwórz ustawienia przez ikonę TempView, wybierz inny bok paska lub zmniejsz szerokość panelu. Na monitorze bez systemowego paska panel nie jest wyświetlany. Zachowanie może różnić się między wersjami Windows i układami wielu monitorów.
+Otwórz ustawienia przez ikonę TempView i sprawdź stronę **Ekrany** — przy każdym ekranie widać powód ukrycia panelu. Wybierz inną stronę paska lub zmniejsz panel. Na monitorze bez systemowego paska panel nie jest wyświetlany. Zachowanie może różnić się między wersjami Windows i układami wielu monitorów.
