@@ -2,6 +2,13 @@
 
 Przeprojektowany interfejs i instalator all-in-one są scalone do `main` (przewinięcie z `feature/installer`, która zawiera też `feature/fluent-redesign`). Obie gałęzie etapów pozostają na origin. Wydanie publiczne jest wstrzymane — zob. „Blokery publicznego wydania” i „Kontynuacja”.
 
+## Przekazanie — 2026-10-31
+
+- `main` = `1cf6042` (przewinięcie z `feature/installer`; zawiera przeprojektowanie i instalator). Gałęzie `feature/fluent-redesign` i `feature/installer` pozostają na origin.
+- CI dla `1cf6042`: **w toku** w chwili zapisu. Testy, budowa instalatora, testy instalatora i smoke test zakończyły się powodzeniem; wysyłanie artefaktów nie było jeszcze zakończone. Wynik końcowy sprawdź w Actions. CI dla `feature/installer` `43681a1` i `47e740a`: sukces.
+- Lokalnie przed scaleniem: `test.ps1` 56/56, `build-installer.ps1` bez ostrzeżeń, `test-installer.ps1` 13/13. Instalator (niepodpisany, 0.3.0) zbudowany tylko lokalnie i w CI; nie jest w repozytorium.
+- Na komputerze deweloperskim nie instalowano TempView, usługi ani PawnIO. Piaskownica systemu Windows **nie jest włączona** — testy instalacyjne nie zostały wykonane.
+- Następna sesja: 1) włączyć Piaskownicę (docs/INSTALLER-TESTS.md) albo przygotować VM i uruchomić `scripts/start-sandbox-test.ps1`; 2) testy UAC/restart/PawnIO w VM; 3) odczyt CPU na fizycznym sprzęcie; 4) certyfikat podpisu; 5) potwierdzenie licencji PawnIO.Setup.
 ## Etap instalatora — postęp
 
 ### Kamień 1: usługa odczytu CPU o najmniejszych uprawnieniach (zrobione)
