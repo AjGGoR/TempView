@@ -1,0 +1,9 @@
+<Project>
+  <!-- Wspólna wersja wszystkich projektów; instalator odczytuje ją z TempView.exe. -->
+  <PropertyGroup>
+    <Version>0.3.0</Version>
+    <Product>TempView</Product>
+    <Company>TempView contributors</Company>
+    <Copyright>Copyright (c) 2026 TempView contributors</Copyright>
+  </PropertyGroup>
+</Project>

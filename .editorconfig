@@ -12,3 +12,7 @@ indent_size = 4
 [*.ps1]
 # Windows PowerShell 5.1 reads BOM-less scripts as ANSI and breaks Polish strings.
 charset = utf-8-bom
+
+[*.iss]
+# Inno Setup reads BOM-less scripts as ANSI; Polish text needs UTF-8 with BOM.
+charset = utf-8-bom

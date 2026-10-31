@@ -16,19 +16,31 @@ jobs:
       - name: Test
         shell: pwsh
         run: ./scripts/test.ps1
-      - name: Publish self-contained x64
+      - name: Build offline installer (self-contained package, verified PawnIO, pinned Inno Setup)
         shell: pwsh
-        run: ./scripts/build.ps1
+        run: ./scripts/build-installer.ps1
+      - name: Installer tests (nothing is installed on the runner)
+        shell: pwsh
+        run: ./scripts/test-installer.ps1
       - name: Start packaged application (no hardware compatibility claim)
         shell: pwsh
         run: |
           $app = Start-Process ./artifacts/TempView-win-x64/TempView.exe -ArgumentList '--smoke' -PassThru
           if (-not $app.WaitForExit(45000)) { Stop-Process -Id $app.Id; throw 'Application did not finish smoke check.' }
           if ($app.ExitCode -ne 0) { throw "Application exited with $($app.ExitCode)" }
-      - name: Downloadable application
+      - name: Installer (primary download, unsigned unless built with a signing certificate)
         uses: actions/upload-artifact@v4
         with:
-          name: TempView-win-x64
+          name: TempView-Setup-win-x64
+          path: |
+            artifacts/installer/TempView-Setup-*.exe
+            artifacts/installer/TempView-Setup-*.sha256
+            artifacts/installer/TempView-Setup-*.inventory.json
+          if-no-files-found: error
+      - name: Portable package (advanced, no CPU service)
+        uses: actions/upload-artifact@v4
+        with:
+          name: TempView-win-x64-portable
           path: artifacts/TempView-win-x64.zip
           if-no-files-found: error
       - name: Test results

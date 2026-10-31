@@ -12,11 +12,13 @@ namespace TempView;
 public sealed class App : Application
 {
     const string OpenSignalName = @"Local\TempView.Desktop.OpenSettings";
+    // Set by the installer/uninstaller to close TempView gracefully before replacing or removing files.
+    const string ExitSignalName = @"Local\TempView.Desktop.Exit";
     volatile AppSettings settings = new(); readonly SettingsStore store; readonly Dictionary<string, Widget> widgets = [];
     readonly CancellationTokenSource stop = new(); SettingsWindow? editor; System.Windows.Forms.NotifyIcon? tray; ContextMenu? trayMenu; volatile Sample sample = new(SensorReading.Unavailable("Oczekiwanie na pierwszy odczyt czujnika."), SensorReading.Unavailable("Oczekiwanie na pierwszy odczyt czujnika."), []);
     static string LogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TempView", "diagnostics.json");
     static string? SettingsPath;
-    EventWaitHandle? openSignal;
+    EventWaitHandle? openSignal, exitSignal;
     App() => store = new SettingsStore(SettingsPath);
 
     [STAThread]
@@ -56,6 +58,8 @@ public sealed class App : Application
 
         openSignal = new EventWaitHandle(false, EventResetMode.AutoReset, OpenSignalName);
         ThreadPool.RegisterWaitForSingleObject(openSignal, (_, _) => Dispatcher.BeginInvoke(new Action(() => OpenSettings())), null, -1, false);
+        exitSignal = new EventWaitHandle(false, EventResetMode.ManualReset, ExitSignalName);
+        ThreadPool.RegisterWaitForSingleObject(exitSignal, (_, _) => Dispatcher.BeginInvoke(new Action(() => Shutdown())), null, -1, true);
 
         if (loaded.Warning != null) MessageBox.Show(loaded.Warning, "Konfiguracja TempView", MessageBoxButton.OK, MessageBoxImage.Warning);
         sensorTask = Task.Run(ReadSensors); _ = Task.Run(LocateBars);
@@ -162,5 +166,5 @@ public sealed class App : Application
         foreach (var key in widgets.Keys.Except(selected.Select(b => b.Device)).ToArray()) { widgets[key].Close(); widgets.Remove(key); }
         foreach (var b in selected) { if (!widgets.TryGetValue(b.Device, out var w)) widgets[b.Device] = w = new Widget(() => OpenSettings(), CreateMenu); w.Update(b, s, palette, cpu, gpu); }
     }
-    protected override void OnExit(ExitEventArgs e) { stop.Cancel(); sensorTask?.Wait(TimeSpan.FromSeconds(3)); if (tray != null) { tray.Visible = false; tray.Dispose(); } openSignal?.Dispose(); base.OnExit(e); }
+    protected override void OnExit(ExitEventArgs e) { stop.Cancel(); sensorTask?.Wait(TimeSpan.FromSeconds(3)); if (tray != null) { tray.Visible = false; tray.Dispose(); } openSignal?.Dispose(); exitSignal?.Dispose(); base.OnExit(e); }
 }

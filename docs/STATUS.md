@@ -27,6 +27,57 @@ Granica bezpieczeństwa usługi:
 - usługa ładuje natywne DLL wyłącznie z System32 i katalogu instalacji; dziennik w Dzienniku zdarzeń, nie w katalogach zapisywalnych przez użytkowników. Instalator (kamień 2) ograniczy token usługi do `SeChangeNotifyPrivilege`.
 
 Zweryfikowane: 56 testów (16 nowych: protokół i złośliwe komunikaty, wybór czujnika, diagnoza przyczyn braku CPU, potok z weryfikacją pliku serwera i odrzuceniem podszytego serwera). `TempView.Sensors.exe --console` jako zwykły użytkownik: odczyt potoku działa, otwarcie z prawem zapisu odrzucone, czujnik CPU zgłoszony z `value: null` (brak PawnIO). GUI: GPU 50°C, CPU N/A z poprawnym powodem. Paczka self-contained zawiera obie aplikacje, runtime .NET 10.0.14. Usługa nie była rejestrowana na tym komputerze — rejestracja i odczyt CPU z PawnIO wymagają środowiska testowego (Windows Sandbox/VM).
+### Kamień 2: instalator offline (zrobione, testy instalacyjne czekają na środowisko jednorazowe)
+
+Inno Setup 6.7.4 (dojrzała linia 6.x, licencja zezwalająca na użycie komercyjne). Jeden plik `TempView-Setup-0.3.0-x64-unsigned.exe` (ok. 57 MB) zawiera:
+- self-contained TempView i usługę `TempViewSensors` z runtime .NET 10.0.14;
+- niezmieniony, podpisany `PawnIO_setup.exe` 2.2.0;
+- licencje i odpowiadające źródła PawnIO/PawnPP.
+
+Działa bez internetu; niczego nie pobiera podczas instalacji.
+
+- **Kreator:** krótki i po polsku — lokalizacja (tylko przy pierwszej instalacji), zadania (autostart, skrót), strona „Temperatura procesora” z wyjaśnieniem sterownika, podsumowanie, ekran końcowy ze stanem odczytu CPU. TempView po instalacji startuje bez podniesionych uprawnień (`runasoriginaluser`).
+- **PawnIO warunkowo** (logika w `installer/Decisions.iss`):
+  - instalacja, gdy brak sterownika, a CPU to Intel/AMD;
+  - ponowne użycie wersji ≥ 2.2.0, bez obniżania wersji;
+  - aktualizacja wersji 2.1.x;
+  - blokada starszych lub nierozpoznanych wersji z instrukcją;
+  - użytkownik może zrezygnować.
+- **Kody wyjścia:** 0, 3010 (restart) i 1223/1275/577/1260 dostają czytelny opis; nieudany sterownik daje kod wyjścia instalatora 101 (TempView zainstalowany, CPU ograniczone).
+- **Bezpieczeństwo:**
+  - Payload jest weryfikowany przy budowaniu (SHA-256 zgodny ze skrótem wydania GitHub + wydawca Authenticode). Przy instalacji sprawdzany jest ponownie SHA-256 w katalogu `Program Files` (tylko administratorzy), bez folderu tymczasowego użytkownika.
+  - Usługa ma cytowaną ścieżkę i token ograniczony do `SeChangeNotifyPrivilege`.
+  - Brak wyłączania zabezpieczeń, wyjątków antywirusa, wydania unrestricted i zadań harmonogramu.
+- **Aktualizacja i odinstalowanie:**
+  - Działający TempView (zainstalowany lub przenośny) jest zamykany sygnałem `Local\TempView.Desktop.Exit`; starsze wersje bez sygnału dostają komunikat.
+  - Odinstalowanie usuwa pliki, skróty, autostart i usługę; zachowuje ustawienia i PawnIO.
+- **Podpis:** ścieżka `-SignThumbprint` (signtool + znacznik czasu dla plików TempView, deinstalatora i instalatora). **Brak certyfikatu** — artefakt jest niepodpisany i oznaczony sufiksem `-unsigned`.
+- **Inwentarz** `*.inventory.json`: wersje, licencje, SHA-256, commit, status podpisu, 29 pakietów NuGet. Formalnego SBOM (SPDX/CycloneDX) nie generujemy; brak istniejącego narzędzia w projekcie.
+- **CI:** buduje instalator jako główny artefakt (`TempView-Setup-win-x64`), uruchamia testy instalatora; ZIP przenośny jest drugorzędny. Usunięto ręczny skrypt `download-driver.ps1`.
+
+Zweryfikowane na tym komputerze (bez instalowania czegokolwiek):
+- `scripts/test.ps1`: 56/56.
+- `scripts/test-installer.ps1`: 13/13:
+  - podmieniony bajt w PawnIO i obcy wydawca są odrzucane;
+  - 17 przypadków logiki decyzji;
+  - wykrycie i łagodne zamknięcie działającego TempView na zbudowanej paczce;
+  - suma SHA-256.
+- Podgląd kreatora (`/DPreview`, bez UAC): wszystkie strony obejrzane na zrzutach; przycisk Instaluj odmówił, katalog docelowy nie powstał.
+- Paczka: smoke test 0, usługa w trybie konsoli publikuje potok.
+
+Niezweryfikowane (wymaga Piaskownicy/VM, procedura w docs/INSTALLER-TESTS.md):
+- rzeczywista instalacja i deinstalacja, praca offline, UAC jako zwykły użytkownik i jego anulowanie;
+- instalacja PawnIO 2.2.0, aktualizacja z 2.1.0, ponowne użycie nowszej wersji, blokada sterownika, restart 3010;
+- rejestracja i start usługi z ograniczonym tokenem, odczyt CPU przez usługę na sprzęcie Intel/AMD/APU;
+- ścieżki z polskimi znakami;
+- zgodność PawnIO 2.2.0 z modułami LHM 0.9.6 (notatki wydania deklarują zgodność wsteczną).
+
+Piaskownica jest na tym komputerze wyłączona (Hyper-V włączony). Funkcji nie włączano bez zgody użytkownika.
+
+Blokery publicznego wydania:
+1. brak certyfikatu podpisu kodu;
+2. brak wyraźnej licencji programu instalacyjnego PawnIO.Setup (sterownik jest GPL) — potrzebne potwierdzenie autora;
+3. brak testów instalacyjnych w środowisku jednorazowym i na fizycznym sprzęcie.
 ## Etap przeprojektowania interfejsu
 
 Gałąź `feature/fluent-redesign`. Panel na pasku i okno ustawień mają nowy wygląd zgodny z Windows 11 / Fluent 2. Odczyt czujników, wykrywanie paska i mechanizm nakładki pozostały bez zmian funkcjonalnych.

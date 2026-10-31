@@ -16,3 +16,4 @@ settings.json
 settings.*.json
 *.dmp
 tools/
+installer/**/output/

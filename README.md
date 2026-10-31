@@ -14,24 +14,38 @@ TempView wyświetla temperatury procesora (CPU) i karty graficznej (GPU) w niewi
 
 ## Wymagania
 
-- Windows 11 w wersji x64.
-- Sprzęt udostępniający obsługiwane czujniki temperatury. Dostępność pomiarów zależy od urządzenia i jego sterowników.
-- Dla wielu czujników CPU: sterownik PawnIO oraz uprawnienia administratora.
+| Platforma | Stan |
+|---|---|
+| Windows 11 x64 (kompilacja 22000 lub nowsza) | obsługiwany; instalator i aplikacja testowane na Windows 11 Pro 26200 |
+| Windows 10 | nieobsługiwany: integracja z paskiem zadań jest przygotowana dla Windows 11 i nie była testowana na Windows 10; instalator go blokuje |
+| Windows 11 ARM64 | nieobsługiwany: aplikacja, runtime i sterownik PawnIO są x64; instalator blokuje emulację x64 |
 
-Paczka aplikacji zawiera środowisko .NET potrzebne do uruchomienia. Nie trzeba instalować go osobno. Do pobrania aplikacji i opcjonalnego sterownika potrzebne jest połączenie z internetem.
+- Temperatura GPU: karty NVIDIA, AMD i Intel ze sterownikiem producenta. Nie wymaga dodatkowych sterowników ani uprawnień administratora.
+- Temperatura CPU: procesory Intel i AMD obsługiwane przez LibreHardwareMonitor 0.9.6. Wymaga sterownika PawnIO, który instalator może zainstalować (szczegóły w [DRIVER.md](docs/DRIVER.md)). Nie każdy model udostępnia czujnik; wtedy TempView pokazuje N/A.
+- Instalacja wymaga zgody administratora (UAC). TempView działa później bez uprawnień administratora.
 
-## Pobieranie i uruchomienie
+Instalator zawiera wszystko: aplikację, środowisko .NET 10 i sterownik PawnIO. Nie trzeba niczego pobierać osobno, a instalacja działa bez internetu.
 
-1. Otwórz zakładkę [Actions](https://github.com/AjGGoR/TempView/actions) i wybierz najnowszy zakończony powodzeniem przebieg **Windows build and tests** dla gałęzi `main`.
-2. W sekcji **Artifacts** pobierz **TempView-win-x64**. GitHub może wymagać zalogowania, aby pobrać plik.
-3. Rozpakuj pobrany ZIP. Jeśli zawiera kolejną paczkę ZIP, rozpakuj również ją.
-4. Otwórz rozpakowany folder i uruchom **TempView.exe**. Zachowaj wszystkie dołączone pliki w tym samym folderze.
+## Instalacja
 
-Jeżeli aplikacja już działa, ponowne uruchomienie **TempView.exe** otwiera jej ustawienia. Ikona TempView znajduje się też w obszarze powiadomień obok zegara; może być schowana pod strzałką **Pokaż ukryte ikony**.
+1. Pobierz instalator. Na razie dostępny jest jako artefakt GitHub Actions: otwórz [Actions](https://github.com/AjGGoR/TempView/actions), wybierz najnowszy udany przebieg **Windows build and tests** i pobierz **TempView-Setup-win-x64** (GitHub może wymagać zalogowania; artefakt jest spakowany w ZIP przez GitHub — otwórz go i uruchom plik `TempView-Setup-…-x64.exe`).
+2. Uruchom instalator i zatwierdź okno kontroli konta użytkownika.
+3. Wybierz opcje: uruchamianie po zalogowaniu, skrót na pulpicie i odczyt temperatury CPU (sterownik PawnIO z wyjaśnieniem w instalatorze).
+4. Kliknij **Instaluj**, a na końcu **Zakończ** z zaznaczonym **Uruchom TempView**.
+
+Panel pojawi się w obszarze paska zadań. Jeżeli instalacja sterownika wymaga restartu, instalator o tym poinformuje.
+
+Aktualna wersja instalatora jest **niepodpisana** (nie ma jeszcze certyfikatu podpisu kodu). Windows SmartScreen może ostrzec przed uruchomieniem. Porównaj sumę SHA-256 z plikiem `.sha256` dołączonym do artefaktu. Nie wyłączaj zabezpieczeń Windows.
+
+Aktualizacja: uruchom nowszy instalator. Ustawienia zostają zachowane, a działający TempView jest zamykany automatycznie.
+
+Odinstalowanie: **Ustawienia > Aplikacje > Zainstalowane aplikacje > TempView > Odinstaluj**. Usuwane są pliki programu, skróty, uruchamianie po zalogowaniu i usługa TempView. Ustawienia osobiste (`%LOCALAPPDATA%\TempView`) i sterownik PawnIO pozostają; sterownik usuniesz osobno jako aplikację PawnIO, jeżeli nie używa go inny program.
+
+Paczka przenośna ZIP (**TempView-win-x64-portable**) jest przeznaczona dla zaawansowanych użytkowników: nie instaluje sterownika ani usługi, więc temperatura CPU działa w niej tylko po uruchomieniu jako administrator z już zainstalowanym PawnIO. Wcześniejsze ustawienia wersji przenośnej są wykorzystywane przez wersję instalowaną; stary folder możesz usunąć ręcznie.
 
 ## Ustawienia i obsługa
 
-Kliknij panel temperatur lub ikonę TempView w obszarze powiadomień. Prawy przycisk na panelu lub ikonie otwiera menu: **Ustawienia**, **Diagnostyka czujników** i **Zakończ TempView**.
+Kliknij panel temperatur lub ikonę TempView w obszarze powiadomień (może być schowana pod strzałką **Pokaż ukryte ikony**). Ponowne uruchomienie TempView z menu Start także otwiera ustawienia działającej aplikacji. Prawy przycisk na panelu lub ikonie otwiera menu: **Ustawienia**, **Diagnostyka czujników** i **Zakończ TempView**.
 
 - **Wygląd** — podgląd panelu z bieżącymi odczytami, układ, ikony, szerokość, rozmiar tekstu, margines, motyw, krycie tła i własne kolory.
 - **Ekrany** — ekran główny, wszystkie ekrany z paskiem lub wybrane ekrany; strona paska osobno dla każdego ekranu. Przy każdym ekranie widać, czy panel jest widoczny, a jeśli nie, dlaczego.
@@ -44,13 +58,13 @@ Ustawienia z poprzedniej wersji TempView są wczytywane automatycznie; Twoje kol
 
 ## Gdy temperatura pokazuje N/A
 
-`N/A` oznacza brak wiarygodnego, aktualnego pomiaru. Najedź na panel albo wybierz **Diagnostyka czujników** w menu TempView, aby poznać przyczynę. Strona **Czujniki** opisuje problem i stan sterownika.
+`N/A` oznacza brak wiarygodnego, aktualnego pomiaru. TempView nigdy nie podstawia zera ani wartości przykładowych. Najedź na panel albo wybierz **Diagnostyka czujników** w menu TempView, aby poznać przyczynę. Strona **Czujniki** pokazuje też stan sterownika PawnIO i usługi odczytu CPU.
 
-1. Sprawdź wybór czujnika w ustawieniach. Po podłączeniu urządzenia otwórz ustawienia ponownie, aby odświeżyć dostępną listę.
-2. Jeśli brakuje temperatury CPU, sprawdź [instrukcję instalacji PawnIO](docs/DRIVER.md). Jest również dołączona do paczki jako **DRIVER.md**. Sterownik instaluje się osobno; samo uruchomienie TempView jako administrator nie zastępuje jego instalacji.
-3. Po instalacji sterownika zamknij TempView i uruchom ponownie. Jeśli pomiary nadal wymagają dodatkowych uprawnień, kliknij **TempView.exe** prawym przyciskiem i wybierz **Uruchom jako administrator**. Podwyższone uprawnienia obejmują wtedy całą aplikację.
+1. Temperatura CPU: uruchom instalator TempView ponownie i zaznacz odczyt temperatury CPU. Jeżeli instalator zgłosił potrzebę restartu, uruchom ponownie komputer.
+2. Jeżeli Windows zablokował sterownik, pozostaw zabezpieczenia włączone; TempView będzie pokazywać temperaturę GPU. Szczegóły w [DRIVER.md](docs/DRIVER.md).
+3. Sprawdź wybór czujnika w ustawieniach. Po podłączeniu urządzenia kliknij **Odśwież listę czujników**.
 
-Nie wyłączaj zabezpieczeń Windows, aby uzyskać pomiar. Nie każdy model CPU lub GPU udostępnia obsługiwaną temperaturę; dla niedostępnych czujników pozostanie `N/A`.
+Nie każdy model CPU lub GPU udostępnia obsługiwaną temperaturę; dla niedostępnych czujników pozostanie `N/A`.
 
 ## Gdy panel jest niewidoczny
 

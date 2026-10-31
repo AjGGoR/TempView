@@ -1,25 +1,54 @@
-# Dostęp CPU: PawnIO
+# Temperatura CPU: sterownik PawnIO i usługa TempView
 
-LibreHardwareMonitor 0.9.6 korzysta z osobno instalowanego sterownika PawnIO. W środowisku testowym brak PawnIO uniemożliwił odczyt temperatur CPU. Samo uruchomienie TempView jako administrator nie instaluje sterownika i nie rozwiązuje tego przypadku. Brak pomiaru pozostaje `N/A`; zerowy/niedodatni wynik CPU jest odrzucany jako niewiarygodny.
+## Kiedy sterownik jest potrzebny
 
-Instalator sterownika nie jest częścią paczki TempView. Nie uruchamia się automatycznie. Jeżeli chcesz umożliwić dostęp do CPU, pobierz PawnIO z [oficjalnej strony autora](https://pawnio.eu) albo wersję 2.1.0 dołączoną przez [LibreHardwareMonitor 0.9.6](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/blob/v0.9.6/LibreHardwareMonitor/Resources/PawnIO_setup.exe). Instalacja sterownika wymaga zatwierdzenia uprawnień administratora. Przed instalacją sprawdź podpis cyfrowy. Następnie zamknij i ponownie uruchom TempView. Dostępność konkretnego sensora nadal zależy od sprzętu i zabezpieczeń.
+Windows nie udostępnia programom temperatury procesora. TempView korzysta z LibreHardwareMonitor 0.9.6, który czyta czujniki CPU (Intel: MSR, AMD: SMN/SMU) przez sterownik **PawnIO**. Ten sam sterownik jest potrzebny do temperatury zintegrowanej grafiki w procesorach AMD (APU). Temperatury dedykowanych kart NVIDIA, AMD i Intel pochodzą ze sterowników tych kart i **nie wymagają PawnIO**.
 
-Repozytorium udostępnia skrypt pobierający dokładnie tę wersję, sprawdzający SHA256 i poprawny podpis Authenticode z podmiotem `namazso.eu`:
+Urządzenie PawnIO dopuszcza wyłącznie konto SYSTEM i administratorów (ACL `D:P(A;;GA;;;SY)(A;;GA;;;BA)` w INF sterownika). Dlatego instalator TempView dodaje małą usługę `TempViewSensors`, która czyta tylko czujniki CPU i udostępnia ich wartości do odczytu. Samo okno TempView działa bez uprawnień administratora.
 
-```powershell
-./scripts/download-driver.ps1
-```
+## Co robi instalator
 
-W rozpakowanej paczce aplikacji ten sam skrypt jest dostępny jako `./drivers/download-driver.ps1`. Pobranie wymaga połączenia z internetem. Paczka nie instaluje automatycznie wszystkich zależności sprzętowych; sterownik instaluje użytkownik osobno.
+Strona „Temperatura procesora” w instalatorze wyjaśnia wymaganie i pozwala z niego zrezygnować. Decyzja zależy od komputera:
 
-Skrypt tylko pobiera plik do katalogu Downloads. Nie uruchamia go, nie podnosi uprawnień i nie wyłącza ochrony Windows. Oczekiwany SHA256 instalatora:
+| Stan komputera | Działanie instalatora |
+|---|---|
+| Procesor Intel lub AMD, brak PawnIO | instaluje dołączony PawnIO 2.2.0 i usługę (opcja domyślnie zaznaczona) |
+| PawnIO 2.2.0 lub nowszy | używa zainstalowanego sterownika, nie instaluje go ponownie i nigdy nie obniża wersji |
+| PawnIO 2.1.x | aktualizuje go do 2.2.0 (obsługiwana aktualizacja w miejscu) |
+| starszy lub nierozpoznany PawnIO | nie zmienia go; odczyt CPU pozostaje wyłączony, instalator mówi, co zrobić |
+| inny procesor | nie oferuje odczytu CPU |
+| użytkownik odznaczy opcję | brak sterownika i usługi; GPU działa, CPU = N/A |
 
-`A3A46226C5E2824F4CDD42BE0EECBABFC672C86F7889710F5AB1E6AD385B47A0`
+Sterownik instaluje oryginalny, niezmieniony i podpisany instalator PawnIO z argumentami `-install -silent`. TempView nigdy nie używa wydania „unrestricted” (niepodpisanego, dla programistów). Instalacja sterownika wymaga uprawnień administratora (UAC instalatora TempView). Jeżeli instalator PawnIO zgłosi potrzebę restartu (kod 3010), TempView poprosi o ponowne uruchomienie komputera.
 
-Jeżeli podpis lub hash się nie zgadza, nie uruchamiaj pobranego pliku. Jeżeli Windows blokuje sterownik, pozostaw zabezpieczenia włączone i korzystaj z dostępnych odczytów.
+Jeżeli Windows zablokuje sterownik (np. zasady bezpieczeństwa organizacji) albo instalacja się nie powiedzie, TempView zostaje zainstalowany, temperatura CPU pokazuje N/A, a ekran końcowy i dziennik instalacji podają przyczynę. Instalator kończy się wtedy kodem 101. Nie wyłączaj zabezpieczeń Windows, aby obejść blokadę.
 
-## Licencje i źródła
+Po odinstalowaniu TempView sterownik PawnIO **zostaje**, bo mogą go używać inne programy (np. LibreHardwareMonitor). Usuniesz go w **Ustawienia > Aplikacje > Zainstalowane aplikacje > PawnIO**.
 
-PawnIO 2.1.0 jest objęty GPL 2 lub późniejszą z wyjątkiem opisanym w upstream README, obejmującym niezależne moduły komunikujące się wyłącznie przez IOCTL oraz wskazane połączenia z LGPL. Wyjątek nie obejmuje w ten sam sposób modułów wykonywanych przez interfejs Pawn. Źródła sterownika: [tag 2.1.0](https://github.com/namazso/PawnIO/tree/2.1.0), commit `e1043d7750f501b6b0d3ac0a71bd5b9406cd17b6`; GPL i pełny wyjątek znajdują się również w katalogu licenses. TempView nie redystrybuuje binarnego instalatora sterownika; pobranie odbywa się bezpośrednio z upstream.
+## Usługa TempViewSensors
 
-LibreHardwareMonitor 0.9.6 osadza moduły PawnIO.Modules 0.1.6 na LGPL 2.1. Ich licencja, informacja upstream i odpowiadające źródła ZIP są dołączane do paczki przez skrypt budowania. Źródła: [PawnIO.Modules 0.1.6](https://github.com/namazso/PawnIO.Modules/tree/0.1.6).
+- Konto LocalSystem, start automatyczny. Instalator ogranicza jej token do `SeChangeNotifyPrivilege`.
+- Czyta wyłącznie czujniki temperatury CPU. Nie przyjmuje poleceń, plików ani parametrów.
+- Publikuje migawkę na potoku `\\.\pipe\TempView.Sensors.v1`: tylko wyjście, odczyt dla zalogowanych użytkowników, zakaz dostępu sieciowego.
+- TempView sprawdza, że potok obsługuje plik usługi zarejestrowany w systemie, i weryfikuje każdy komunikat.
+- Stan usługi i sterownika widać w TempView na stronie **Czujniki > Diagnostyka**.
+
+## Wersja przenośna (ZIP)
+
+Paczka ZIP nie instaluje sterownika ani usługi. Odczyt CPU działa w niej tylko wtedy, gdy PawnIO jest już zainstalowany, a TempView zostanie uruchomiony jako administrator. Zalecany jest instalator.
+
+## Weryfikacja i licencje
+
+| Element | Wartość |
+|---|---|
+| Wersja | PawnIO 2.2.0 (wydanie 2026-03-15) |
+| Źródło | https://github.com/namazso/PawnIO.Setup/releases/tag/2.2.0 (link „Download” na https://pawnio.eu) |
+| SHA-256 `PawnIO_setup.exe` | `1F519A22E47187F70A1379A48CA604981C4FCF694F4E65B734AAA74A9FBA3032` (zgodny z sumą opublikowaną przez GitHub) |
+| Podpis instalatora | `CN=namazso.eu, O=namazso, L=Debrecen, C=HU` (GLOBALTRUST 2015 CODESIGNING 1), znacznik czasu Microsoft |
+| Podpis sterownika | katalog `pawnio.cat` podpisany przez Microsoft Windows Hardware Compatibility Publisher |
+
+Skrypt budowania pobiera instalator z powyższego źródła, sprawdza SHA-256 i wydawcę, a dopiero potem dołącza go do instalatora TempView. Instalator TempView ponownie sprawdza SHA-256 tuż przed uruchomieniem sterownika z katalogu instalacji (dostępnego tylko dla administratorów). Instalacja nie pobiera niczego z internetu.
+
+PawnIO jest objęty licencją GPL 2 lub późniejszą z wyjątkiem dla programów komunikujących się przez IOCTL (`licenses/PawnIO-2.2.0-README.md`, `licenses/PawnIO-GPL-2.0.txt`). Odpowiadające źródła są dołączone do instalacji: `licenses/PawnIO-2.2.0-source.zip` (commit `5cdf470831fdfff3f7f1d06363ca6b230f3bf35a`) i `licenses/PawnPP-e64e4c3-source.zip` (moduł PawnPP, commit `e64e4c37b2d8ba0d8ee57205faf8183aee12c438`).
+
+**Otwarta kwestia przed publiczną dystrybucją:** repozytorium PawnIO.Setup nie zawiera pliku licencji dla samego programu instalacyjnego (sterownik jest na GPL). Instalator jest redystrybuowany przez LibreHardwareMonitor, ale nie znaleziono wyraźnej zgody autora dla innych projektów. Przed publicznym wydaniem uzyskaj pisemne potwierdzenie od autora (kontakt w README PawnIO).

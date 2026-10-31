@@ -22,9 +22,6 @@ try {
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'docs/licenses') -Destination $output -Recurse -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'docs') -Destination $output -Recurse -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'docs/DRIVER.md') -Destination $output -Force
-    $drivers = Join-Path $output 'drivers'
-    New-Item -ItemType Directory -Path $drivers -Force | Out-Null
-    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/download-driver.ps1') -Destination $drivers -Force
     # Źródła modułów LGPL osadzonych przez LibreHardwareMonitor 0.9.6.
     $sources = Join-Path $output 'licenses/PawnIO.Modules-0.1.6-source.zip'
     Invoke-WebRequest 'https://codeload.github.com/namazso/PawnIO.Modules/zip/refs/tags/0.1.6' -OutFile $sources
