@@ -251,6 +251,9 @@ begin
     Exit;
   end;
   Log('PawnIO setup exit code: ' + IntToStr(Code));
+  // The payload is only needed for this one run; do not leave it in Program Files.
+  DeleteFile(Setup);
+  RemoveDir(ExpandConstant('{app}\prerequisites'));
   Problem := PawnIOResultText(Code);
   if not PawnIOSucceeded(Code) then Exit;
   if PawnIORestartNeeded(Code) then RestartRequired := True;
@@ -354,5 +357,9 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   // PawnIO is shared and stays installed; settings in %LOCALAPPDATA%\TempView are kept.
   if CurUninstallStep = usUninstall then
+  begin
     RemoveSensorService;
+    // Event source registered by the service on first log entry.
+    RegDeleteKeyIncludingSubkeys(HKLM64, 'SYSTEM\CurrentControlSet\Services\EventLog\Application\' + ServiceName);
+  end;
 end;

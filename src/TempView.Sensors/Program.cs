@@ -76,6 +76,7 @@ sealed class Publisher
     // Event Log instead of files: a SYSTEM process must not write into user-writable directories.
     static void Log(string message, EventLogEntryType type)
     {
-        try { if (Environment.UserInteractive) Console.Error.WriteLine(message); else EventLog.WriteEntry("Application", "TempViewSensors: " + message, type); } catch { }
+        // Own event source in the Application log (registered on first use by the SYSTEM account).
+        try { if (Environment.UserInteractive) Console.Error.WriteLine(message); else EventLog.WriteEntry(BrokerProtocol.ServiceName, message, type); } catch { }
     }
 }

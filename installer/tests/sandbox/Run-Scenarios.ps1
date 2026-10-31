@@ -65,6 +65,7 @@ $p = Start-Process $uninstaller -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES'
 Note "uninstall -> exit code $($p.ExitCode)"; Start-Sleep 3
 Check (-not (Installed $default)) 'program files removed'
 Check ((ServiceInfo) -eq 'missing') 'sensor service removed'
+Check (-not (Test-Path 'HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application\TempViewSensors')) 'service event source removed'
 Check ($null -eq (Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue).TempView) 'autostart entry removed'
 Check (Test-Path $settings) 'user settings preserved after uninstall'
 Note "PawnIO after uninstall (expected unchanged): '$(PawnIO)'"

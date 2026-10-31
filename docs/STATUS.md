@@ -78,6 +78,20 @@ Blokery publicznego wydania:
 1. brak certyfikatu podpisu kodu;
 2. brak wyraźnej licencji programu instalacyjnego PawnIO.Setup (sterownik jest GPL) — potrzebne potwierdzenie autora;
 3. brak testów instalacyjnych w środowisku jednorazowym i na fizycznym sprzęcie.
+### Kamień 3: przegląd ścieżek uprzywilejowanych i CI (zrobione)
+
+Poprawki po przeglądzie:
+- usługa zapisuje błędy we własnym źródle Dziennika zdarzeń `TempViewSensors` (wcześniej `"Application"`, które nie jest zarejestrowanym źródłem); deinstalator usuwa to źródło;
+- payload PawnIO i katalog `prerequisites` są usuwane z `Program Files` tuż po użyciu.
+
+Sprawdzone w przeglądzie bez zmian:
+- cytowana ścieżka usługi (`sc create binPath= "\"…\""`);
+- brak danych wejściowych od klientów potoku;
+- uruchomienie GUI bez podniesienia;
+- uruchamianie programów wyłącznie z pełnych ścieżek `{sys}`/`{app}`;
+- brak plików wykonywalnych w katalogach zapisywalnych przez użytkownika.
+
+CI (GitHub Actions, czysty runner `windows-latest`) dla 47e740a: testy, budowa instalatora z weryfikacją PawnIO i Inno Setup oraz testy instalatora zakończone powodzeniem. Lokalnie po poprawkach: 56/56, test-installer 13/13, smoke 0.
 ## Etap przeprojektowania interfejsu
 
 Gałąź `feature/fluent-redesign`. Panel na pasku i okno ustawień mają nowy wygląd zgodny z Windows 11 / Fluent 2. Odczyt czujników, wykrywanie paska i mechanizm nakładki pozostały bez zmian funkcjonalnych.
