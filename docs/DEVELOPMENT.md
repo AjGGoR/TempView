@@ -54,6 +54,14 @@ Kod TempView jest objęty MIT. Informacje o zależnościach i ich źródłach zn
 - Testy ręczne bez naruszania własnej konfiguracji: `TempView.exe --settings-file <plik> --diagnostics <plik> --settings [look|displays|sensors|colors]`.
 - Format ustawień ma wersję 2. Plik w wersji 1 jest migrowany przy odczycie (`SettingsMigration`) i zapisywany jako wersja 2 dopiero po kliknięciu Zapisz.
 
+## Architektura czujników
+
+- `TempView.Core` — logika bez sprzętu: ustawienia, protokół usługi (`BrokerProtocol`), wybór czujnika, diagnoza braku CPU.
+- `TempView.Hardware` — LibreHardwareMonitor (`HardwareReader`) oraz potok usługi (`BrokerServer`, `BrokerClient`).
+- `TempView.Sensors` — usługa Windows `TempViewSensors` (LocalSystem). Czyta wyłącznie czujniki CPU, bo urządzenie PawnIO dopuszcza tylko SYSTEM i Administratorów. Do testów bez instalacji: `TempView.Sensors.exe --console` (bez uprawnień sprzętowych CPU pozostaje `null`).
+- `TempView` (GUI) czyta GPU we własnym procesie; CPU z usługi, jeśli jest zarejestrowana, w przeciwnym razie lokalnie (działa tylko z uprawnieniami administratora).
+- build.ps1 publikuje GUI i usługę do jednego katalogu (wspólny runtime).
+
 ## Uwagi o środowisku
 
 - Skrypty `.ps1` są zapisane jako UTF-8 z BOM, ponieważ Windows PowerShell 5.1 odczytuje pliki bez BOM jako ANSI i psuje polskie napisy.

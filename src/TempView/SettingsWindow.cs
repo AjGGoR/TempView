@@ -252,7 +252,7 @@ public sealed class SettingsWindow : Window
         live.Add(() =>
         {
             var sample = context.Sample();
-            var key = $"{sample.Cpu.Reason}|{sample.Gpu.Reason}|{sample.DriverInstalled}";
+            var key = $"{sample.Cpu.Reason}|{sample.Gpu.Reason}|{sample.DriverInstalled}|{sample.Broker}";
             if (key == shownProblems) return;
             shownProblems = key; problems.Children.Clear();
             foreach (var (name, reading) in new[] { ("CPU", sample.Cpu), ("GPU", sample.Gpu) })
@@ -260,7 +260,7 @@ public sealed class SettingsWindow : Window
                 {
                     var driver = name == "CPU" && sample.DriverInstalled == false;
                     problems.Children.Add(InfoBar($"Brak odczytu temperatury {name}", reading.Reason ?? "Czujnik nie zwrócił pomiaru.",
-                        driver ? ("Instrukcja instalacji sterownika", OpenDriverGuide) : null));
+                        driver ? ("Jak włączyć odczyt CPU", OpenDriverGuide) : null));
                 }
         });
 
@@ -308,16 +308,7 @@ public sealed class SettingsWindow : Window
                 v => draft.RefreshSeconds = double.Parse(v, CultureInfo.InvariantCulture), "Częstotliwość odczytu")));
 
         Header(panel, "Diagnostyka");
-        var driverCard = Card("\uE7EF", "Sterownik PawnIO", "", SubtleButton("\uE8A7", "Instrukcja", OpenDriverGuide));
-        panel.Children.Add(driverCard);
-        live.Add(() => SetDescription(driverCard, context.Sample().DriverInstalled switch
-        {
-            true => "Zainstalowany. Część czujników CPU wymaga również uruchomienia TempView jako administrator.",
-            false => "Nie zainstalowano. Bez niego większość czujników CPU jest niedostępna. Sterownik instaluje się osobno.",
-            _ => "Sprawdzanie…",
-        }));
-        var elevated = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
-        panel.Children.Add(Card("\uE83D", "Uprawnienia", elevated ? "TempView działa z uprawnieniami administratora." : "TempView działa bez uprawnień administratora. To bezpieczny tryb; część czujników CPU może pokazywać N/A.", null));
+        var driverCard = Card("\uE7EF", "Sterownik PawnIO", "", SubtleButton("\uE8A7", "Instrukcja", OpenDriverGuide));         panel.Children.Add(driverCard);         live.Add(() => SetDescription(driverCard, context.Sample() switch         {             { DriverInstalled: true } s => $"Zainstalowany (wersja {s.DriverVersion}). Zapewnia dostęp do czujników CPU.",             { DriverInstalled: false } => "Nie zainstalowano. Bez niego temperatura CPU jest niedostępna. Instalator TempView może go zainstalować.",             _ => "Sprawdzanie…",         }));         var serviceCard = Card("\uE912", "Usługa odczytu CPU", "", null);         panel.Children.Add(serviceCard);         live.Add(() => SetDescription(serviceCard, context.Sample().Broker switch         {             BrokerState.Running => "Działa. Usługa TempView odczytuje czujniki CPU z uprawnieniami systemu, a to okno działa bez uprawnień administratora.",             BrokerState.Unreachable => "Zainstalowana, ale nie odpowiada. Uruchom ponownie komputer albo zainstaluj TempView ponownie.",             _ => "Nie zainstalowano. Bez usługi odczyt CPU działa tylko po uruchomieniu TempView jako administrator.",         }));         var elevated = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);         panel.Children.Add(Card("\uE83D", "Uprawnienia", elevated ? "TempView działa z uprawnieniami administratora." : "TempView działa bez uprawnień administratora, tak jak powinien.", null));
         var folder = Path.GetDirectoryName(context.DiagnosticsPath) ?? "";
         panel.Children.Add(Card("\uE8B7", "Pliki ustawień i diagnostyki", context.SettingsPath + "\n" + context.DiagnosticsPath,
             SubtleButton("\uE838", "Otwórz folder", () => Open(folder))));

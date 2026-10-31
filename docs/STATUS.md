@@ -1,6 +1,35 @@
 # Stan TempView — 2026-10-31
 
-Etap: przeprojektowanie interfejsu (gałąź `feature/fluent-redesign`). Panel na pasku i okno ustawień mają nowy wygląd zgodny z Windows 11 / Fluent 2. Odczyt czujników, wykrywanie paska i mechanizm nakładki pozostały bez zmian funkcjonalnych.
+Etap: instalator all-in-one (gałąź `feature/installer`, od `feature/fluent-redesign` @ e0facb9). Etap przeprojektowania interfejsu opisano niżej bez zmian.
+
+## Etap instalatora — postęp
+
+### Kamień 1: usługa odczytu CPU o najmniejszych uprawnieniach (zrobione)
+
+Audyt dostępu do czujników (źródła: kod LibreHardwareMonitor v0.9.6, PawnIO 2.2.0 — INF i `src/driver.cpp`, sprawdzone 2026-10-31):
+
+| Źródło | Co mierzy | Zależność | Uprawnienia |
+|---|---|---|---|
+| NVIDIA (NVAPI, sterownik karty) | temperatura GPU | sterownik NVIDIA | zwykły użytkownik — sprawdzone: RTX 5070, 32–50°C |
+| AMD dGPU (ADL, sterownik karty) | temperatura GPU | sterownik AMD | bez PawnIO w kodzie LHM; na tym komputerze iGPU Radeon zgłasza czujnik bez PawnIO |
+| Intel GPU (IGCL) | temperatura GPU | sterownik Intel | bez PawnIO w kodzie LHM; niesprawdzone sprzętowo |
+| Intel CPU (MSR IA32_THERM_STATUS) | rdzenie/pakiet | PawnIO | ACL urządzenia PawnIO: tylko SYSTEM i Administratorzy |
+| AMD Zen CPU (SMN, Tctl/Tdie) | Tctl/Tdie, CCD | PawnIO | jw. |
+| AMD APU iGPU (SMU „GFX”) | temperatura iGPU | PawnIO | jw. |
+| ACPI thermal zone (WMI/licznik) | strefa płyty, nie CPU | brak | odrzucone: na tym komputerze `\_TZ.TZ10` = 290 K (17°C) przy pracującym CPU — nie jest temperaturą procesora |
+
+Wniosek: PawnIO jest potrzebny wyłącznie do temperatury CPU (i iGPU w APU AMD); GPU dedykowane działają bez niego. Ponieważ PawnIO wpuszcza tylko SYSTEM i Administratorów, odczyt CPU został przeniesiony do osobnej usługi `TempViewSensors` (`TempView.Sensors.exe`). Interfejs nadal działa bez uprawnień administratora.
+
+Granica bezpieczeństwa usługi:
+- tylko odczyt czujników CPU i publikacja migawki; brak poleceń, plików, parametrów i ścieżek od klienta;
+- potok `\\.\pipe\TempView.Sensors.v1` jednokierunkowy (serwer → klient), ACL: SYSTEM pełny dostęp, zalogowani użytkownicy tylko odczyt, NETWORK zabroniony; komunikat ≤ 64 KiB, walidowany po stronie klienta (wersja, długości, znaki sterujące, zakres temperatur);
+- klient łączy się z poziomem `Identification` (brak podszywania się pod użytkownika) i sprawdza, że serwer potoku to plik usługi zarejestrowany w `HKLM\SYSTEM\CurrentControlSet\Services\TempViewSensors` (klucz tylko dla administratorów);
+- usługa ładuje natywne DLL wyłącznie z System32 i katalogu instalacji; dziennik w Dzienniku zdarzeń, nie w katalogach zapisywalnych przez użytkowników. Instalator (kamień 2) ograniczy token usługi do `SeChangeNotifyPrivilege`.
+
+Zweryfikowane: 56 testów (16 nowych: protokół i złośliwe komunikaty, wybór czujnika, diagnoza przyczyn braku CPU, potok z weryfikacją pliku serwera i odrzuceniem podszytego serwera). `TempView.Sensors.exe --console` jako zwykły użytkownik: odczyt potoku działa, otwarcie z prawem zapisu odrzucone, czujnik CPU zgłoszony z `value: null` (brak PawnIO). GUI: GPU 50°C, CPU N/A z poprawnym powodem. Paczka self-contained zawiera obie aplikacje, runtime .NET 10.0.14. Usługa nie była rejestrowana na tym komputerze — rejestracja i odczyt CPU z PawnIO wymagają środowiska testowego (Windows Sandbox/VM).
+## Etap przeprojektowania interfejsu
+
+Gałąź `feature/fluent-redesign`. Panel na pasku i okno ustawień mają nowy wygląd zgodny z Windows 11 / Fluent 2. Odczyt czujników, wykrywanie paska i mechanizm nakładki pozostały bez zmian funkcjonalnych.
 
 ## Zmiany w tym etapie
 

@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../TempView.Core/TempView.Core.csproj" /><PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" /></ItemGroup>
+</Project>

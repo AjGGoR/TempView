@@ -15,6 +15,8 @@ try {
     if (Test-Path -LiteralPath $resolvedOutput) { Remove-Item -LiteralPath $resolvedOutput -Recurse -Force }
     # Nie używaj single-file: biblioteki natywne i sterowniki muszą pozostać dostępne.
     Invoke-Dotnet publish 'src/TempView/TempView.csproj' -c Release -r $Runtime --self-contained true '-p:PublishSingleFile=false' '-p:PublishTrimmed=false' -o $output
+    # Usługa czujników CPU w tym samym katalogu: wspólny runtime i biblioteki tej samej wersji.
+    Invoke-Dotnet publish 'src/TempView.Sensors/TempView.Sensors.csproj' -c Release -r $Runtime --self-contained true '-p:PublishSingleFile=false' '-p:PublishTrimmed=false' -o $output
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'LICENSE') -Destination $output -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'README.md') -Destination $output -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'docs/licenses') -Destination $output -Recurse -Force

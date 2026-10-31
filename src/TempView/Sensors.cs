@@ -1,43 +1,56 @@
-using LibreHardwareMonitor.Hardware;
+using System.Security.Principal;
 using TempView.Core;
+using TempView.Hardware;
 namespace TempView;
 
 public record SensorOption(string Id, string Name, string Kind);
-public record Sample(SensorReading Cpu, SensorReading Gpu, IReadOnlyList<SensorOption> Sensors, bool? DriverInstalled = null);
-// Owned by one worker thread; UI never calls into hardware objects.
+public record Sample(SensorReading Cpu, SensorReading Gpu, IReadOnlyList<SensorOption> Sensors, bool? DriverInstalled = null, BrokerState Broker = BrokerState.NotInstalled, string? DriverVersion = null);
+
+/// <summary>
+/// Owned by one worker thread; UI never calls into hardware objects.
+/// GPU sensors are read in this (unprivileged) process. CPU sensors come from the TempView sensor service when it is
+/// installed, because PawnIO only admits SYSTEM and Administrators. Without the service (portable use) CPU is read
+/// locally, which works only when TempView itself runs elevated.
+/// </summary>
 public sealed class Sensors : IDisposable
 {
-    readonly Computer computer = new() { IsCpuEnabled = true, IsGpuEnabled = true };
-    bool opened; DateTime openedAt;
+    static readonly bool Elevated = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+    HardwareReader? local;
+
     public Sample Read(AppSettings settings)
     {
-        try
+        var servicePath = BrokerClient.RegisteredServicePath();
+        var broker = servicePath is null ? BrokerState.NotInstalled : BrokerState.Unreachable;
+        if (local is null || local.Cpu != (servicePath is null)) { local?.Dispose(); local = new HardwareReader(cpu: servicePath is null, gpu: true); }
+        var values = new List<SensorValue>();
+        string? localError = null;
+        try { values.AddRange(local.Read()); }
+        catch (Exception ex) { localError = ex.Message; }
+        BrokerSnapshot? snapshot = null;
+        if (servicePath is not null)
         {
-            if (opened && DateTime.UtcNow - openedAt > TimeSpan.FromMinutes(1)) { computer.Close(); opened = false; }
-            if (!opened) { computer.Open(); opened = true; openedAt = DateTime.UtcNow; }
-            var values = new List<(SensorOption Option, float? Value)>();
-            foreach (var h in computer.Hardware) Visit(h, values);
-            SensorReading Pick(string kind, string? id)
-            {
-                if (kind == "CPU" && !LibreHardwareMonitor.PawnIo.PawnIo.IsInstalled) return SensorReading.Unavailable("Brak sterownika PawnIO. Pobierz go skryptem drivers/download-driver.ps1 i zainstaluj (UAC), potem uruchom TempView ponownie.");
-                var candidates = values.Where(x => x.Option.Kind == kind).ToList();
-                var chosen = !string.IsNullOrEmpty(id) ? candidates.FirstOrDefault(x => x.Option.Id == id) : candidates.OrderByDescending(x => x.Value is float v && float.IsFinite(v) && v > 0).ThenByDescending(x => Score(x.Option.Name, kind)).FirstOrDefault();
-                if (chosen.Option == null) return SensorReading.Unavailable(!string.IsNullOrEmpty(id)
-                    ? $"Wybrany czujnik {kind} jest niedostępny. Urządzenie mogło zostać odłączone. Wybierz inny czujnik lub tryb automatyczny."
-                    : kind == "CPU" ? "Nie znaleziono czujnika temperatury CPU. Część czujników wymaga sterownika PawnIO i uprawnień administratora." : "Nie znaleziono czujnika temperatury GPU. Ten model lub jego sterownik może nie udostępniać temperatury.");
-                return chosen.Value is float v && float.IsFinite(v) && v > 0 && v <= 200 ? SensorReading.Available(v) with { Source = chosen.Option.Name } : SensorReading.Unavailable("Czujnik nie zwrócił aktualnego pomiaru.");
-            }
-            return new(Pick("CPU", settings.CpuSensorId), Pick("GPU", settings.GpuSensorId), values.Select(x => x.Option).ToArray(), LibreHardwareMonitor.PawnIo.PawnIo.IsInstalled);
+            (snapshot, _) = BrokerClient.Read(BrokerProtocol.PipeName, servicePath, TimeSpan.FromMilliseconds(800));
+            // A snapshot older than a few seconds means the service stopped reading.
+            if (snapshot is not null && DateTimeOffset.UtcNow - snapshot.Timestamp < TimeSpan.FromSeconds(10)) { broker = BrokerState.Running; values.AddRange(snapshot.Sensors); }
+            else snapshot = null;
         }
-        catch (Exception ex) { opened = false; try { computer.Close(); } catch { } return new(SensorReading.Unavailable(ex.Message), SensorReading.Unavailable(ex.Message), []); }
+        var localDriver = HardwareReader.DriverVersion;
+        var access = new CpuAccess(broker, snapshot, localDriver is not null, Elevated);
+
+        SensorReading Pick(string kind, string? id)
+        {
+            var chosen = SensorSelection.Pick(values, kind, id);
+            if (chosen?.Value is double v) return SensorReading.Available(v) with { Source = chosen.Name };
+            if (kind == "CPU") return SensorReading.Unavailable(CpuDiagnosis.Explain(access, !string.IsNullOrEmpty(id), chosen is not null));
+            if (localError is not null) return SensorReading.Unavailable(localError);
+            return SensorReading.Unavailable(chosen is not null ? "Czujnik nie zwrócił aktualnego pomiaru."
+                : !string.IsNullOrEmpty(id) ? "Wybrany czujnik GPU jest niedostępny. Urządzenie mogło zostać odłączone. Wybierz inny czujnik lub tryb automatyczny."
+                : "Nie znaleziono czujnika temperatury GPU. Ten model lub jego sterownik może nie udostępniać temperatury.");
+        }
+        var driverVersion = snapshot?.DriverVersion ?? localDriver;
+        return new(Pick("CPU", settings.CpuSensorId), Pick("GPU", settings.GpuSensorId), values.Select(v => new SensorOption(v.Id, v.Name, v.Kind)).ToArray(),
+            snapshot?.DriverInstalled ?? localDriver is not null, broker, driverVersion);
     }
-    static int Score(string name, string kind) => name.Contains("Package", StringComparison.OrdinalIgnoreCase) ? 100 : name.Contains(kind == "CPU" ? "Tctl" : "Core", StringComparison.OrdinalIgnoreCase) ? 90 : name.Contains("Average", StringComparison.OrdinalIgnoreCase) ? 80 : 0;
-    static void Visit(IHardware h, List<(SensorOption, float?)> list)
-    {
-        h.Update();
-        string? kind = h.HardwareType == HardwareType.Cpu ? "CPU" : h.HardwareType.ToString().StartsWith("Gpu") ? "GPU" : null;
-        if (kind != null) foreach (var s in h.Sensors.Where(s => s.SensorType == SensorType.Temperature)) list.Add((new(s.Identifier.ToString(), h.Name + " / " + s.Name, h.HardwareType == HardwareType.Cpu && s.Name == "GFX" ? "GPU" : kind), s.Value));
-        foreach (var sub in h.SubHardware) Visit(sub, list);
-    }
-    public void Dispose() { try { computer.Close(); } catch { } }
+
+    public void Dispose() => local?.Dispose();
 }
