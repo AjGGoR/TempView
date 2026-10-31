@@ -1,6 +1,6 @@
 # Stan TempView — 2026-10-31
 
-Etap: instalator all-in-one (gałąź `feature/installer`, od `feature/fluent-redesign` @ e0facb9). Etap przeprojektowania interfejsu opisano niżej bez zmian.
+Przeprojektowany interfejs i instalator all-in-one są scalone do `main` (przewinięcie z `feature/installer`, która zawiera też `feature/fluent-redesign`). Obie gałęzie etapów pozostają na origin. Wydanie publiczne jest wstrzymane — zob. „Blokery publicznego wydania” i „Kontynuacja”.
 
 ## Etap instalatora — postęp
 
@@ -130,9 +130,15 @@ WPF/.NET 10 + LibreHardwareMonitorLib 0.9.6 (MPL 2.0). Osobne okna nad obszarem 
 
 - Nakładka nie rezerwuje miejsca w Explorer. Wolny obszar jest sprawdzany co ok. sekundę; brak pełnego drzewa UIA, brak miejsca, ukryty pasek lub pełny ekran ukrywają panel. Powód widać na stronie Ekrany.
 - Osobne zadania odczytują sensory i układ paska; UI odrzuca stare pomiary. Szerokość panelu jest mierzona w wątku UI i przekazywana do skanera paska.
-- PawnIO wymaga osobnej instalacji; uprawnienia administratora obejmują cały proces. Rzeczywiste temperatury ≤0°C są odrzucane; niewspierany czujnik nie jest zastępowany 0°C.
+- PawnIO instaluje (warunkowo) instalator TempView; odczyt CPU wykonuje usługa `TempViewSensors`, a GUI działa bez uprawnień administratora. Rzeczywiste temperatury ≤0°C są odrzucane; niewspierany czujnik nie jest zastępowany 0°C.
 - `Application.ThemeMode` jest w .NET 10 oznaczone jako eksperymentalne (WPF0001). Ostrzeżenie wyciszono w jednym miejscu.
 
 ## Kontynuacja
 
-Przeczytaj AGENTS.md, pobierz gałąź `feature/fluent-redesign`, uruchom scripts/test.ps1 i scripts/build.ps1. Następne kroki: test przy 125–200% i mieszanym DPI, wysoki kontrast i wyłączona przezroczystość na żywo, Narrator, odczyt CPU z PawnIO; potem scalenie do `main`. Dalej: macierz sprzętu i powłoki, ograniczenie narzutu UIA, broker uprawnień.
+Przeczytaj AGENTS.md, pobierz `main`, uruchom `scripts/test.ps1`, `scripts/build-installer.ps1` i `scripts/test-installer.ps1`. Następne kroki, w kolejności:
+1. Testy instalatora w Piaskownicy lub VM według docs/INSTALLER-TESTS.md: instalacja offline, UAC, PawnIO, usługa, aktualizacja, dezinstalacja, restart.
+2. Odczyt CPU przez usługę na fizycznym sprzęcie Intel, AMD i APU.
+3. Certyfikat podpisu kodu i podpisane wydanie.
+4. Potwierdzenie licencji programu instalacyjnego PawnIO.Setup.
+5. Wcześniejsze punkty interfejsu: DPI 125–200% i mieszane, wysoki kontrast, wyłączona przezroczystość, Narrator.
+6. Dalej: macierz sprzętu i powłoki, ograniczenie narzutu UIA.

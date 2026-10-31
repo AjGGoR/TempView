@@ -43,6 +43,15 @@ Odinstalowanie: **Ustawienia > Aplikacje > Zainstalowane aplikacje > TempView > 
 
 Paczka przenośna ZIP (**TempView-win-x64-portable**) jest przeznaczona dla zaawansowanych użytkowników: nie instaluje sterownika ani usługi, więc temperatura CPU działa w niej tylko po uruchomieniu jako administrator z już zainstalowanym PawnIO. Wcześniejsze ustawienia wersji przenośnej są wykorzystywane przez wersję instalowaną; stary folder możesz usunąć ręcznie.
 
+## Stan wydania
+
+TempView jest w fazie testów. Instalator **nie jest jeszcze gotowy do publicznej dystrybucji**:
+- Instalator jest **niepodpisany**. Podpisywanie jest przygotowane, ale nie ma jeszcze certyfikatu.
+- Instalacja, aktualizacja, dezinstalacja, instalacja sterownika PawnIO i działanie usługi odczytu CPU nie zostały jeszcze sprawdzone w środowisku testowym. Odczyt CPU przez usługę nie został potwierdzony na fizycznym sprzęcie. Sprawdzone są testy automatyczne, budowanie w CI, weryfikacja zależności i kreator instalatora (bez instalacji).
+- Redystrybucja programu instalacyjnego PawnIO czeka na potwierdzenie licencji przez autora; sam sterownik jest na licencji GPL.
+
+Szczegóły i aktualny postęp: [docs/STATUS.md](docs/STATUS.md).
+
 ## Ustawienia i obsługa
 
 Kliknij panel temperatur lub ikonę TempView w obszarze powiadomień (może być schowana pod strzałką **Pokaż ukryte ikony**). Ponowne uruchomienie TempView z menu Start także otwiera ustawienia działającej aplikacji. Prawy przycisk na panelu lub ikonie otwiera menu: **Ustawienia**, **Diagnostyka czujników** i **Zakończ TempView**.
